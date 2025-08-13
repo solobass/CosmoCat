@@ -1,16 +1,14 @@
--- Simple test client script for CosmoCat
-print("=== SIMPLE CLIENT SCRIPT STARTING ===")
+-- CatTreat collection system for CosmoCat
+print("=== CATTREAT COLLECTION SYSTEM STARTING ===")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
+local playerScore = 0
 
 -- Wait for everything to initialize
 wait(1)
-
--- Simple score tracking
-local playerScore = 0
 
 -- Check for CatTreat collection
 local function CheckCatTreatCollection()
@@ -22,7 +20,7 @@ local function CheckCatTreatCollection()
     
     -- Find CatTreats in the workspace
     for _, obj in pairs(workspace:GetChildren()) do
-        if obj.Name == "CatTreat" and obj.Parent then
+        if obj.Name == "CatTreat" and obj:IsA("Part") and obj.Parent then
             local distance = (humanoidRootPart.Position - obj.Position).Magnitude
             local collectionRange = 5 -- Distance to collect
             
@@ -44,5 +42,32 @@ end
 -- Set up collection detection
 RunService.Heartbeat:Connect(CheckCatTreatCollection)
 
-print("Client collection system initialized")
-print("=== SIMPLE CLIENT SCRIPT COMPLETE ===")
+-- Create score display
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ScoreUI"
+screenGui.Parent = playerGui
+
+local scoreLabel = Instance.new("TextLabel")
+scoreLabel.Name = "ScoreLabel"
+scoreLabel.Size = UDim2.new(0, 200, 0, 50)
+scoreLabel.Position = UDim2.new(1, -220, 1, -70) -- Lower right corner
+scoreLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+scoreLabel.BackgroundTransparency = 0.5
+scoreLabel.BorderSizePixel = 0
+scoreLabel.Text = "Meow: 0"
+scoreLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+scoreLabel.TextScaled = true
+scoreLabel.Font = Enum.Font.GothamBold
+scoreLabel.Parent = screenGui
+
+-- Update score display
+local function UpdateScore()
+    scoreLabel.Text = "Meow: " .. tostring(playerScore)
+end
+
+RunService.Heartbeat:Connect(UpdateScore)
+
+print("CatTreat collection system initialized")
+print("Score display created")
+print("=== CATTREAT COLLECTION SYSTEM COMPLETE ===")
