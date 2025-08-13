@@ -1,0 +1,23 @@
+{
+  "name": "CosmoCat",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "MainScript": {
+        "$className": "Script",
+        "$path": "src/ServerScriptService/MainScript.lua"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "MainClient": {
+          "$className": "LocalScript",
+          "$path": "src/StarterPlayer/StarterPlayerScripts/MainClient.lua"
+        }
+      }
+    }
+  }
+}
