@@ -20,9 +20,22 @@ local function CheckCatTreatCollection()
     
     -- Find CatTreats in the workspace
     for _, obj in pairs(workspace:GetChildren()) do
-        if obj.Name == "CatTreat" and obj:IsA("Part") and obj.Parent then
-            local distance = (humanoidRootPart.Position - obj.Position).Magnitude
+        if obj.Name == "CatTreat" and obj.Parent then
+            local distance
             local collectionRange = 5 -- Distance to collect
+            
+            if obj:IsA("Model") then
+                -- For Models, check distance to PrimaryPart or first Part
+                local partToCheck = obj.PrimaryPart or obj:FindFirstChildOfClass("Part")
+                if partToCheck then
+                    distance = (humanoidRootPart.Position - partToCheck.Position).Magnitude
+                else
+                    distance = math.huge -- Can't collect if no parts
+                end
+            else
+                -- For Parts, check distance directly
+                distance = (humanoidRootPart.Position - obj.Position).Magnitude
+            end
             
             if distance <= collectionRange then
                 -- Collect the CatTreat

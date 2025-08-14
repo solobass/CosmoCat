@@ -16,6 +16,15 @@
           "$path": "src/StarterPlayer/StarterPlayerScripts/MainClient.client.lua"
         }
       }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "Map": {
+        "$className": "Folder",
+        "CatTreat": {
+          "$className": "Folder"
+        }
+      }
     }
   }
 }
