@@ -178,7 +178,6 @@ local collectionCooldown = 0.1 -- Prevent multiple collections within 0.1 second
 
 -- Wait for GameConfig and RemoteEvents to load
 local GameConfig
-local CollectCatTreatEvent
 
 print("DEBUG: Waiting for GameConfig and RemoteEvents...")
 
@@ -202,18 +201,58 @@ while not GameConfig do
 end
 
 -- Wait for RemoteEvents
-while not CollectCatTreatEvent do
+local maxWaitTime = 20 -- Maximum wait time in seconds
+local startTime = tick()
+local CollectCatTreatEvent = nil
+
+-- Wait a bit longer initially for the server to create the RemoteEvent
+wait(5)
+
+print("DEBUG: Starting RemoteEvent search...")
+print("DEBUG: ReplicatedStorage children:")
+for _, child in pairs(game:GetService("ReplicatedStorage"):GetChildren()) do
+    print("  -", child.Name, "(" .. child.ClassName .. ")")
+end
+
+while not CollectCatTreatEvent and (tick() - startTime) < maxWaitTime do
     local success, result = pcall(function()
-        return ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("CollectCatTreat")
+        -- Try to find the RemoteEvents folder first
+        local remoteEventsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("RemoteEvents")
+        if not remoteEventsFolder then
+            print("DEBUG: RemoteEvents folder not found, waiting...")
+            return nil
+        end
+        
+        print("DEBUG: RemoteEvents folder found, looking for CollectCatTreat...")
+        print("DEBUG: RemoteEvents folder children:")
+        for _, child in pairs(remoteEventsFolder:GetChildren()) do
+            print("  -", child.Name, "(" .. child.ClassName .. ")")
+        end
+        
+        -- Try to find the CollectCatTreat RemoteEvent
+        local collectEvent = remoteEventsFolder:FindFirstChild("CollectCatTreat")
+        if collectEvent then
+            print("DEBUG: Found CollectCatTreat RemoteEvent!")
+            return collectEvent
+        else
+            print("DEBUG: CollectCatTreat RemoteEvent not found in folder")
+            return nil
+        end
     end)
     
-    if success then
+    if success and result then
         CollectCatTreatEvent = result
         print("DEBUG: CollectCatTreatEvent loaded successfully")
+        break
     else
-        print("DEBUG: Failed to load CollectCatTreatEvent:", result)
-        wait(0.5)
+        print("DEBUG: Failed to load CollectCatTreatEvent, retrying...")
+        wait(1)
     end
+end
+
+if not CollectCatTreatEvent then
+    warn("ERROR: Failed to load CollectCatTreatEvent after", maxWaitTime, "seconds!")
+    return
 end
 
 print("DEBUG: Both GameConfig and CollectCatTreatEvent are loaded!")

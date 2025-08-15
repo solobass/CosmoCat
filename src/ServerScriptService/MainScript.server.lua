@@ -1,15 +1,11 @@
 -- CatTreat spawning system for CosmoCat
 print("=== CATTREAT SYSTEM STARTING ===")
-local TweenService = game:GetService("TweenService")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Create RemoteEvent for client-server communication FIRST
+-- Create RemoteEvent for client-server communication IMMEDIATELY
 print("DEBUG: Creating RemoteEvents...")
 local RemoteEvents = Instance.new("Folder")
 RemoteEvents.Name = "RemoteEvents"
-RemoteEvents.Parent = ReplicatedStorage
+RemoteEvents.Parent = game:GetService("ReplicatedStorage")
 
 local CollectCatTreatEvent = Instance.new("RemoteEvent")
 CollectCatTreatEvent.Name = "CollectCatTreat"
@@ -17,6 +13,26 @@ CollectCatTreatEvent.Parent = RemoteEvents
 
 print("DEBUG: RemoteEvents created successfully!")
 print("DEBUG: CollectCatTreatEvent exists:", CollectCatTreatEvent ~= nil)
+print("DEBUG: CollectCatTreatEvent Parent:", CollectCatTreatEvent.Parent.Name)
+print("DEBUG: CollectCatTreatEvent Full Path:", CollectCatTreatEvent:GetFullName())
+print("DEBUG: RemoteEvents folder children count:", #RemoteEvents:GetChildren())
+
+-- Wait a moment to ensure the RemoteEvent is fully created
+wait(0.1)
+print("DEBUG: RemoteEvent creation confirmed, proceeding with rest of system...")
+print("DEBUG: Final RemoteEvents folder children:")
+for _, child in pairs(RemoteEvents:GetChildren()) do
+    print("  -", child.Name, "(" .. child.ClassName .. ")")
+end
+
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Initialize Cat Avatar System
+local CatAvatarManager = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("CatAvatarManager"))
+print("DEBUG: CatAvatarManager loaded successfully")
 
 -- Handle CatTreat collection requests from clients FIRST
 local function HandleCatTreatCollection(player, catTreatInfo)
@@ -257,34 +273,33 @@ local function SpawnCatTreat()
     return catTreat
 end
 
--- Spawn all CatTreats with staggered timing
+-- Spawn all CatTreats efficiently
 local function SpawnAllCatTreats()
     print("Starting CatTreat spawning...")
     local spawnedCount = 0
     
-    -- Spawn CatTreats with slight delays to create a nice effect
+    -- Spawn all CatTreats immediately without delays
     for i = 1, MAX_CATTREATS do
-        spawn(function()
-            local catTreat = SpawnCatTreat()
-            spawnedCount = spawnedCount + 1
-            print("Spawned CatTreat", spawnedCount, "of", MAX_CATTREATS)
-            
-            -- Small delay between spawns
-            wait(0.2)
-        end)
+        local catTreat = SpawnCatTreat()
+        spawnedCount = spawnedCount + 1
+        print("Spawned CatTreat", spawnedCount, "of", MAX_CATTREATS)
     end
     
-    -- Wait for all to spawn, then announce completion
-    wait(MAX_CATTREATS * 0.2 + FALL_TIME)
-    print("All", MAX_CATTREATS, "CatTreats spawned and landed!")
+    print("All", MAX_CATTREATS, "CatTreats spawned! They will land in", FALL_TIME, "seconds.")
 end
 
--- Start spawning
-print("DEBUG: Waiting 2 seconds for folders to load...")
-wait(2)
+-- Start spawning immediately
+print("DEBUG: Starting CatTreat spawning immediately...")
 SpawnAllCatTreats()
 
 print("=== CATTREAT COLLECTION HANDLER SETUP COMPLETE ===")
 
 print("=== CATTREAT SYSTEM COMPLETE ===")
+
+-- Initialize the Cat Avatar System
+print("=== INITIALIZING CAT AVATAR SYSTEM ===")
+CatAvatarManager.Initialize()
+print("=== CAT AVATAR SYSTEM COMPLETE ===")
+
+print("=== COSMOCAT GAME SERVER FULLY INITIALIZED ===")
 

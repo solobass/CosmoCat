@@ -8,6 +8,9 @@
         "$className": "Folder",
         "GameConfig": {
           "$path": "src/ReplicatedStorage/Shared/GameConfig.lua"
+        },
+        "CatAvatarManager": {
+          "$path": "src/ReplicatedStorage/Shared/CatAvatarManager.lua"
         }
       },
       "CatModels": {
