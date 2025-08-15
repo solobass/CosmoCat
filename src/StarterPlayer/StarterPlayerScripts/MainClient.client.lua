@@ -340,34 +340,22 @@ local function CheckCatTreatCollection()
                 local partToCheck = obj.PrimaryPart or obj:FindFirstChildOfClass("Part")
                 if partToCheck then
                     distance = (humanoidRootPart.Position - partToCheck.Position).Magnitude
-                    -- Debug output for Models
-                    if distance <= 15 then -- Only debug when close
-                        print("DEBUG: CatTreat Model at distance:", distance, "from player")
-                    end
                 else
                     distance = math.huge -- Can't collect if no parts
                 end
             elseif obj:IsA("Part") then
                 -- For Parts, check distance directly
                 distance = (humanoidRootPart.Position - obj.Position).Magnitude
-                -- Debug output for Parts
-                if distance <= 15 then -- Only debug when close
-                    print("DEBUG: CatTreat Part at distance:", distance, "from player")
-                end
             else
                 distance = math.huge -- Skip non-Model/Part objects
             end
             
             if distance <= collectionRange then
-                print("DEBUG: COLLECTING CatTreat at distance:", distance)
-                print("DEBUG: CatTreat type:", obj.ClassName, "Name:", obj.Name)
-                
                 -- Mark this CatTreat as being collected to prevent multiple collections
                 local collectingTag = Instance.new("BoolValue")
                 collectingTag.Name = "Collecting"
                 collectingTag.Value = true
                 collectingTag.Parent = obj
-                print("DEBUG: Added collecting tag")
                 
                 -- Update collection time
                 lastCollectionTime = currentTime
@@ -378,57 +366,40 @@ local function CheckCatTreatCollection()
                     if partToGlow then
                         partToGlow.Material = Enum.Material.Neon
                         partToGlow.Color = Color3.fromRGB(255, 255, 0) -- Bright yellow
-                        print("DEBUG: Made Model glow")
                     end
                 elseif obj:IsA("Part") then
                     obj.Material = Enum.Material.Neon
                     obj.Color = Color3.fromRGB(255, 255, 0) -- Bright yellow
-                    print("DEBUG: Made Part glow")
                 end
 
-                        -- Collect points and check level up
-                        local points = obj:FindFirstChild("Points")
-                        if points then
-                            playerScore = playerScore + points.Value
-                            print("Collected CatTreat! Score:", playerScore, "Level:", playerLevel)
-                            
-                            -- Check level up in a separate thread so it doesn't block CatTreat destruction
-                            spawn(function()
-                                CheckLevelUp()
-                            end)
-                        else
-                            print("DEBUG: No Points value found on CatTreat")
-                        end
+                -- Collect points and check level up
+                local points = obj:FindFirstChild("Points")
+                if points then
+                    playerScore = playerScore + points.Value
+                    print("Collected CatTreat! Score:", playerScore, "Level:", playerLevel)
+                    
+                    -- Check level up in a separate thread so it doesn't block CatTreat destruction
+                    spawn(function()
+                        CheckLevelUp()
+                    end)
+                end
 
-                        -- Request server to destroy the CatTreat immediately
-                        print("DEBUG: Requesting server to destroy CatTreat...")
-                        print("DEBUG: CatTreat object:", obj)
-                        print("DEBUG: CatTreat Parent:", obj.Parent)
-                        print("DEBUG: CatTreat Name:", obj.Name)
-                        print("DEBUG: CatTreat ClassName:", obj.ClassName)
-                        
-                        -- Send CatTreat info to server instead of the object itself
-                        local catTreatInfo = {
-                            name = obj.Name,
-                            position = obj:IsA("Model") and (obj.PrimaryPart and obj.PrimaryPart.Position or obj:FindFirstChildOfClass("Part") and obj:FindFirstChildOfClass("Part").Position) or obj.Position,
-                            className = obj.ClassName
-                        }
-                        
-                        print("DEBUG: About to send catTreatInfo to server:", catTreatInfo)
-                        print("DEBUG: CollectCatTreatEvent exists:", CollectCatTreatEvent ~= nil)
-                        print("DEBUG: CollectCatTreatEvent type:", type(CollectCatTreatEvent))
-                        
-                        local success, error = pcall(function()
-                            CollectCatTreatEvent:FireServer(catTreatInfo)
-                        end)
-                        
-                        if success then
-                            print("DEBUG: Collection request sent to server successfully")
-                        else
-                            print("DEBUG: Failed to send collection request:", error)
-                        end
-                        
-                        break -- Exit the loop after collecting one CatTreat per frame
+                -- Request server to destroy the CatTreat immediately
+                local catTreatInfo = {
+                    name = obj.Name,
+                    position = obj:IsA("Model") and (obj.PrimaryPart and obj.PrimaryPart.Position or obj:FindFirstChildOfClass("Part") and obj:FindFirstChildOfClass("Part").Position) or obj.Position,
+                    className = obj.ClassName
+                }
+                
+                local success, error = pcall(function()
+                    CollectCatTreatEvent:FireServer(catTreatInfo)
+                end)
+                
+                if not success then
+                    print("DEBUG: Failed to send collection request:", error)
+                end
+                
+                break -- Exit the loop after collecting one CatTreat per frame
             end
         end
     end
@@ -593,43 +564,20 @@ screenGui.Parent = playerGui
         end
 RunService.Heartbeat:Connect(UpdateUI)
 
--- Debug function to show nearby CatTreats
-local function DebugNearbyCatTreats()
-    local character = player.Character
-    if not character then return end
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then return end
-    
-    print("DEBUG: Player position:", humanoidRootPart.Position)
-    print("DEBUG: Looking for CatTreats...")
-    
-    local foundCount = 0
-    for _, obj in pairs(workspace:GetChildren()) do
-        if obj.Name == "CatTreat" and obj.Parent then
-            foundCount = foundCount + 1
-            local distance
-            if obj:IsA("Model") then
-                local partToCheck = obj.PrimaryPart or obj:FindFirstChildOfClass("Part")
-                if partToCheck then
-                    distance = (humanoidRootPart.Position - partToCheck.Position).Magnitude
-                    print("DEBUG: CatTreat Model #" .. foundCount .. " at distance:", distance, "Position:", partToCheck.Position)
-                end
-            elseif obj:IsA("Part") then
-                distance = (humanoidRootPart.Position - obj.Position).Magnitude
-                print("DEBUG: CatTreat Part #" .. foundCount .. " at distance:", distance, "Position:", obj.Position)
-            end
-        end
-    end
-    print("DEBUG: Found", foundCount, "CatTreats in workspace")
-end
-
--- Run debug function every 5 seconds
-spawn(function()
-    while true do
-        wait(5)
-        DebugNearbyCatTreats()
-    end
-end)
+-- Debug function to show nearby CatTreats (REMOVED - was causing console spam)
+-- local function DebugNearbyCatTreats()
+--     if not player or not player.Character then return end
+--     local character = player.Character
+--     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+--     if not humanoidRootPart then return end
+--     
+--     local foundCount = 0
+--     for _, obj in pairs(workspace:GetChildren()) do
+--         if obj.Name == "CatTreat" and obj.Parent then
+--             foundCount = foundCount + 1
+--         end
+--     end
+-- end
 
 -- Setup aggressive UI prevention once player is available
 spawn(function()

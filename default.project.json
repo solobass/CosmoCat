@@ -9,6 +9,9 @@
         "GameConfig": {
           "$path": "src/ReplicatedStorage/Shared/GameConfig.lua"
         }
+      },
+      "CatModels": {
+        "$className": "Folder"
       }
     },
     "ServerScriptService": {

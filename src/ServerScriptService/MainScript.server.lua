@@ -95,123 +95,95 @@ local LAND_HEIGHT = 1 -- Lowered from 5 to 1 stud above baseplate
 local PLAY_AREA_SIZE = 100 -- ±50 studs from center
 local FALL_TIME = 4 -- seconds to fall
 
--- Wait for everything to initialize
-wait(2)
-
--- Debug: Check what's in the Workspace
-print("=== DEBUGGING WORKSPACE STRUCTURE ===")
-print("Workspace children:")
-for _, child in pairs(Workspace:GetChildren()) do
-    print("  -", child.Name, "(" .. child.ClassName .. ")")
-end
-
--- Check for CatTreat model directly in Workspace
-if Workspace:FindFirstChild("CatTreat") then
-    print("CatTreat model found directly in Workspace!")
-    local catTreatModel = Workspace.CatTreat
-    print("  -", catTreatModel.Name, "(" .. catTreatModel.ClassName .. ")")
-    
-    if catTreatModel:IsA("Model") then
-        print("  - It's a Model with PrimaryPart:", catTreatModel.PrimaryPart and "Yes" or "No")
-        if catTreatModel.PrimaryPart then
-            print("  - PrimaryPart size:", catTreatModel.PrimaryPart.Size)
-        end
-    end
-else
-    print("CatTreat model NOT found in Workspace!")
-end
-
-if Workspace:FindFirstChild("Map") then
-    print("Map folder found!")
-    print("Map children:")
-    for _, child in pairs(Workspace.Map:GetChildren()) do
-        print("  -", child.Name, "(" .. child.ClassName .. ")")
-    end
-    
-    if Workspace.Map:FindFirstChild("CatTreat") then
-        print("CatTreat folder found!")
-        print("CatTreat folder children:")
-        for _, child in pairs(Workspace.Map.CatTreat:GetChildren()) do
+-- Function to create a CatTreat
+local function CreateCatTreat()
+    -- Try to find the actual CatTreat model first
+    local catModelsFolder = ReplicatedStorage:FindFirstChild("CatModels")
+    if not catModelsFolder then
+        print("DEBUG: CatModels folder not found in ReplicatedStorage")
+        print("DEBUG: ReplicatedStorage children:")
+        for _, child in pairs(ReplicatedStorage:GetChildren()) do
             print("  -", child.Name, "(" .. child.ClassName .. ")")
         end
     else
-        print("CatTreat folder NOT found!")
-    end
-else
-    print("Map folder NOT found!")
-end
-print("=== END DEBUGGING ===")
-
--- Create CatTreat using the actual model
-local function CreateCatTreat()
-    -- Try to find the CatTreat model in the correct location
-    local catTreatModel = nil
-    
-    -- First, try to find it directly in Workspace (where it actually is)
-    if Workspace:FindFirstChild("CatTreat") and Workspace.CatTreat:IsA("Model") then
-        catTreatModel = Workspace.CatTreat
-        print("Found CatTreat model directly in Workspace:", catTreatModel.Name)
-    -- Fallback: try the Map folder
-    elseif Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("CatTreat") then
-        -- Look for any Model in the CatTreat folder
-        for _, child in pairs(Workspace.Map.CatTreat:GetChildren()) do
-            if child:IsA("Model") then
-                catTreatModel = child
-                print("Found CatTreat model in Map folder:", child.Name)
-                break
-            end
-        end
-        
-        -- If no Model found, look for any Part
-        if not catTreatModel then
-            for _, child in pairs(Workspace.Map.CatTreat:GetChildren()) do
-                if child:IsA("BasePart") then
-                    catTreatModel = child
-                    print("Found CatTreat part in Map folder:", child.Name)
-                    break
+        print("DEBUG: CatModels folder found, looking for CatTreat...")
+        local catTreatModel = catModelsFolder:FindFirstChild("CatTreat")
+        if catTreatModel then
+            print("DEBUG: Found CatTreat model, cloning it")
+            local catTreat = catTreatModel:Clone()
+            
+            -- Scale the model appropriately
+            for _, part in pairs(catTreat:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Size = part.Size * 0.03
                 end
             end
+            
+            -- Set properties for all BasePart descendants
+            for _, part in pairs(catTreat:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                    part.CanCollide = false
+                end
+            end
+            
+            -- Add points value
+            local points = Instance.new("IntValue")
+            points.Name = "Points"
+            points.Value = 1
+            points.Parent = catTreat
+            
+            return catTreat
+        else
+            print("DEBUG: CatTreat model not found in CatModels folder")
+            print("DEBUG: CatModels folder children:")
+            for _, child in pairs(catModelsFolder:GetChildren()) do
+                print("  -", child.Name, "(" .. child.ClassName .. ")")
+            end
         end
     end
     
-    local catTreat
-    
-    if catTreatModel then
-        -- Clone the actual CatTreat model
-        catTreat = catTreatModel:Clone()
+    -- Also check if CatTreat is directly in Workspace (where you said you put it)
+    local workspaceCatTreat = Workspace:FindFirstChild("CatTreat")
+    if workspaceCatTreat then
+        print("DEBUG: Found CatTreat directly in Workspace, cloning it")
+        local catTreat = workspaceCatTreat:Clone()
         
-        -- Scale down ALL parts in the model to fix the huge mesh issue
-        local scale = 0.03 -- Adjust this value as needed (0.03 = 3% of original size)
+        -- Scale the model appropriately
         for _, part in pairs(catTreat:GetDescendants()) do
             if part:IsA("BasePart") then
-                part.Size = part.Size * scale
-                -- Set properties on individual parts, not the model
-                part.Anchored = true
-                part.CanCollide = false
-                -- Also scale any meshes
-                local mesh = part:FindFirstChildOfClass("SpecialMesh")
-                if mesh then
-                    mesh.Scale = Vector3.new(scale, scale, scale)
-                end
+                part.Size = part.Size * 0.03
             end
         end
         
-        print("CatTreat Model cloned successfully and scaled to", scale * 100, "% of original size!")
-    else
-        -- Fallback to creating a simple Part if model not found
-        catTreat = Instance.new("Part")
-        catTreat.Name = "CatTreat"
-        catTreat.Size = Vector3.new(2, 2, 2)
-        catTreat.Color = Color3.fromRGB(255, 215, 0) -- Gold color
-        catTreat.Material = Enum.Material.Neon
-        catTreat.Anchored = true
-        catTreat.CanCollide = false
-        print("CatTreat Model not found, created fallback Part")
+        -- Set properties for all BasePart descendants
+        for _, part in pairs(catTreat:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = true
+                part.CanCollide = false
+            end
+        end
+        
+        -- Add points value
+        local points = Instance.new("IntValue")
+        points.Name = "Points"
+        points.Value = 1
+        points.Parent = catTreat
+        
+        return catTreat
     end
     
-    catTreat.Parent = workspace
+    print("DEBUG: CatTreat model not found anywhere, creating fallback Part")
+    -- Fallback: create a simple Part if the model isn't found
+    local catTreat = Instance.new("Part")
+    catTreat.Name = "CatTreat"
+    catTreat.Size = Vector3.new(2, 2, 2)
+    catTreat.Color = Color3.fromRGB(255, 255, 0) -- Yellow
+    catTreat.Material = Enum.Material.Neon
+    catTreat.Anchored = true
+    catTreat.CanCollide = false
     
-    -- Add point value
+    -- Add points value
     local points = Instance.new("IntValue")
     points.Name = "Points"
     points.Value = 1
@@ -223,6 +195,9 @@ end
 -- Spawn a single CatTreat at random position
 local function SpawnCatTreat()
     local catTreat = CreateCatTreat()
+    
+    -- Add the CatTreat to workspace so the client can see it
+    catTreat.Parent = workspace
     
     -- Random spawn position in the sky (diagonal shooting star effect)
     local spawnX = math.random(-PLAY_AREA_SIZE, PLAY_AREA_SIZE)
@@ -305,8 +280,11 @@ local function SpawnAllCatTreats()
 end
 
 -- Start spawning
+print("DEBUG: Waiting 2 seconds for folders to load...")
+wait(2)
 SpawnAllCatTreats()
 
 print("=== CATTREAT COLLECTION HANDLER SETUP COMPLETE ===")
 
 print("=== CATTREAT SYSTEM COMPLETE ===")
+

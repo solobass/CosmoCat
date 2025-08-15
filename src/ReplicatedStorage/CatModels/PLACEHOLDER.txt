@@ -1,0 +1,9 @@
+This folder is for your cat FBX models.
+
+To add your CosmoKitten model:
+1. Import your CosmoKitten.fbx file here
+2. Make sure it's named exactly "CosmoKitten"
+3. Set the PrimaryPart for proper movement
+4. The system will automatically scale it to 3% size
+
+You can delete this file once you've added your model.
