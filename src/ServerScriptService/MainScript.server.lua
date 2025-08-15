@@ -1,14 +1,97 @@
 -- CatTreat spawning system for CosmoCat
 print("=== CATTREAT SYSTEM STARTING ===")
-
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Create RemoteEvent for client-server communication FIRST
+print("DEBUG: Creating RemoteEvents...")
+local RemoteEvents = Instance.new("Folder")
+RemoteEvents.Name = "RemoteEvents"
+RemoteEvents.Parent = ReplicatedStorage
+
+local CollectCatTreatEvent = Instance.new("RemoteEvent")
+CollectCatTreatEvent.Name = "CollectCatTreat"
+CollectCatTreatEvent.Parent = RemoteEvents
+
+print("DEBUG: RemoteEvents created successfully!")
+print("DEBUG: CollectCatTreatEvent exists:", CollectCatTreatEvent ~= nil)
+
+-- Handle CatTreat collection requests from clients FIRST
+local function HandleCatTreatCollection(player, catTreatInfo)
+    print("DEBUG: ===== CATTREAT COLLECTION REQUEST RECEIVED =====")
+    print("DEBUG: Player:", player.Name)
+    print("DEBUG: CatTreat Info:", catTreatInfo)
+    
+    if not catTreatInfo then
+        print("DEBUG: CatTreatInfo is nil")
+        return
+    end
+    
+    if type(catTreatInfo) ~= "table" then
+        print("DEBUG: CatTreatInfo is not a table, it's:", type(catTreatInfo))
+        return
+    end
+    
+    print("DEBUG: CatTreat Name:", catTreatInfo.name)
+    print("DEBUG: CatTreat Position:", catTreatInfo.position)
+    print("DEBUG: CatTreat ClassName:", catTreatInfo.className)
+    
+    -- Find the actual CatTreat object in workspace by name and position
+    local foundCatTreat = nil
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj.Name == catTreatInfo.name and obj:IsA(catTreatInfo.className) then
+            -- Check if position matches (within reasonable tolerance)
+            local objPosition
+            if obj:IsA("Model") then
+                objPosition = obj.PrimaryPart and obj.PrimaryPart.Position or obj:FindFirstChildOfClass("Part") and obj:FindFirstChildOfClass("Part").Position
+            else
+                objPosition = obj.Position
+            end
+            
+            if objPosition and (objPosition - catTreatInfo.position).Magnitude < 5 then
+                foundCatTreat = obj
+                break
+            end
+        end
+    end
+    
+    if not foundCatTreat then
+        print("DEBUG: Could not find CatTreat in workspace matching the info")
+        return
+    end
+    
+    print("DEBUG: Found CatTreat:", foundCatTreat.Name)
+    print("DEBUG: CatTreat Parent:", foundCatTreat.Parent.Name)
+    
+    -- Check if CatTreat has points
+    local points = foundCatTreat:FindFirstChild("Points")
+    if points then
+        print("DEBUG: CatTreat has", points.Value, "points")
+        -- The client will handle score and level progression
+        -- We just need to destroy the CatTreat
+        print("DEBUG: About to destroy CatTreat...")
+        foundCatTreat:Destroy()
+        print("DEBUG: CatTreat destroyed by server successfully!")
+    else
+        print("DEBUG: CatTreat has no Points value")
+        print("DEBUG: CatTreat children:")
+        for _, child in pairs(foundCatTreat:GetChildren()) do
+            print("  -", child.Name, "(" .. child.ClassName .. ")")
+        end
+    end
+    print("DEBUG: ===== END CATTREAT COLLECTION =====")
+end
+
+-- Connect the RemoteEvent immediately
+CollectCatTreatEvent.OnServerEvent:Connect(HandleCatTreatCollection)
+print("DEBUG: CatTreat collection handler connected!")
 
 -- Configuration
 local MAX_CATTREATS = 25
 local SPAWN_HEIGHT = 50
-local LAND_HEIGHT = 5
+local LAND_HEIGHT = 1 -- Lowered from 5 to 1 stud above baseplate
 local PLAY_AREA_SIZE = 100 -- ±50 studs from center
 local FALL_TIME = 4 -- seconds to fall
 
@@ -223,5 +306,7 @@ end
 
 -- Start spawning
 SpawnAllCatTreats()
+
+print("=== CATTREAT COLLECTION HANDLER SETUP COMPLETE ===")
 
 print("=== CATTREAT SYSTEM COMPLETE ===")

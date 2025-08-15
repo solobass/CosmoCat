@@ -2,6 +2,15 @@
   "name": "CosmoCat",
   "tree": {
     "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "GameConfig": {
+          "$path": "src/ReplicatedStorage/Shared/GameConfig.lua"
+        }
+      }
+    },
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "MainScript": {
